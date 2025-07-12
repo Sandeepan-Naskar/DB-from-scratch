@@ -10,7 +10,7 @@ INCLUDE_DIR := include
 
 # Files
 TARGET := $(BIN_DIR)/kvdb
-SRCS := $(SRC_DIR)/main.cpp $(SRC_DIR)/kv_store.cpp $(SRC_DIR)/storage_engine.cpp
+SRCS := $(SRC_DIR)/main.cpp $(SRC_DIR)/kv_store.cpp $(SRC_DIR)/storage_engine.cpp $(SRC_DIR)/btree_index.cpp
 
 # Default rule
 all: $(TARGET)
