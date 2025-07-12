@@ -1,0 +1,3 @@
+bin/kvdb
+data/db.log
+.vscode/settings.json

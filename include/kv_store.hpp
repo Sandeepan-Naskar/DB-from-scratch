@@ -11,6 +11,9 @@ public:
 
     void compact(); // Compact the log file to remove tombstones
 
+    int get_size_limit() const { return engine_->size_limit(); } // Get size limit for compaction
+    int get_current_size() const { return engine_->current_size(); } // Get current size of the log file
+
 private:
     std::unordered_map<std::string, std::string> store_;
     std::unique_ptr<StorageEngine> engine_;

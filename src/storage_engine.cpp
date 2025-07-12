@@ -4,6 +4,8 @@
 
 StorageEngine::StorageEngine(const std::string& db_path) : db_path_(db_path) {
     // Constructor implementation can be added if needed
+    size_limit_ = 10; // Example size limit for compaction
+    current_size_ = 0; // Initialize current size
 }
 
 void StorageEngine::append_put(const std::string& key, const std::string& value) {
@@ -13,6 +15,7 @@ void StorageEngine::append_put(const std::string& key, const std::string& value)
     } else {
         std::cerr << "Failed to open DB file at " << db_path_ << "\n";
     }
+    current_size_++; // Increment current size for each put operation
 }
 
 void StorageEngine::append_del(const std::string& key) {
@@ -22,6 +25,7 @@ void StorageEngine::append_del(const std::string& key) {
     } else {
         std::cerr << "Failed to open DB file at " << db_path_ << "\n";
     }
+    current_size_++; // Increment current size for each delete operation
 }
 
 void StorageEngine::compact(std::unordered_map<std::string, std::string>& latest) {
@@ -74,6 +78,7 @@ std::vector<std::pair<std::string, std::string>> StorageEngine::load_all() {
         } else {
             latest[key] = value;
         }
+        current_size_++; // Increment current size for each entry loaded
     }
 
     for (const auto& [k, v] : latest)
