@@ -47,7 +47,7 @@ void start_cli(KVStore& db) {
             iss >> key;
             std::string value;
             if (db.get(key) != "")
-                std::cout << value << "\n";
+                std::cout << db.get(key) << "\n";
             else
                 std::cout << COLOR_RED << "(nil)\n" << COLOR_RESET;
         } else if (cmd == "del") {
