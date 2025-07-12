@@ -1,5 +1,6 @@
 #pragma once
 #include "storage_engine.hpp"
+#include "btree_index.hpp"
 #include <memory>
 
 class KVStore {
@@ -23,4 +24,5 @@ public:
 private:
     std::unordered_map<std::string, std::string> store_;
     std::unique_ptr<StorageEngine> engine_;
+    BTreeIndex index_;
 };

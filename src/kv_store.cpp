@@ -9,12 +9,14 @@ KVStore::KVStore(const std::string& db_path) {
     auto entries = engine_->load_all();
     for (const auto& [k, v] : entries) {
         store_[k] = v;
+        index_.insert(k);
     }
 }
 
 void KVStore::put(const std::string& key, const std::string& value) {
     store_[key] = value; // Update in-memory state
     engine_->append_put(key, value); // Append to log
+    index_.insert(key);
 }
 
 std::string KVStore::get(const std::string& key) {
@@ -28,6 +30,7 @@ std::string KVStore::get(const std::string& key) {
 void KVStore::del(const std::string& key) {
     store_.erase(key); // Remove from in-memory state
     engine_->append_del(key); // Append tombstone to log
+    index_.remove(key);
 }
 
 void KVStore::compact() {
@@ -37,10 +40,10 @@ void KVStore::compact() {
 
 std::vector<std::pair<std::string, std::string>> KVStore::scan_prefix(const std::string& prefix) const {
     std::vector<std::pair<std::string, std::string>> results;
-
-    for (const auto& [key, value] : store_) {
-        if (key.compare(0, prefix.size(), prefix) == 0) {
-            results.emplace_back(key, value);
+    auto keys = index_.scan_prefix(prefix);
+    for (const auto& key : keys) {
+        if (store_.count(key)) {
+            results.emplace_back(key, store_.at(key));
         }
     }
 
@@ -77,5 +80,8 @@ bool KVStore::save_snapshot() {
 
 bool KVStore::restore_from_snapshot() {
     store_ = engine_->load_snapshot();
+    for (const auto& [key, _] : store_) {
+        index_.insert(key);
+    }
     return true;
 }
