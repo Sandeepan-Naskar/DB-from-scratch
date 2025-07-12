@@ -1,3 +1,4 @@
 bin/kvdb
 data/db.log
 .vscode/settings.json
+data/db.log.snapshot
