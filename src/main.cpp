@@ -1,52 +1,81 @@
 #include <iostream>
 #include "kv_store.hpp"
+#include <sstream>
 
-int main() {
-    KVStore db("data/db.log");
-    int choice;
-
-    // TODO: Handle multiple word inputs for key and value
-    // For simplicity, we will assume single word inputs for now
-    std::string key, value;
+void start_cli(KVStore& db) {
+    std::string line;
+    std::cout << "Welcome to KVDB! Type 'help' to see commands.\n";
 
     while (true) {
+        std::cout << "kvdb> ";
+        if (!std::getline(std::cin, line)) break;
+
+        std::istringstream iss(line);
+        std::string cmd;
+        iss >> cmd;
 
         // Implement compaction if the size limit is reached
         if (db.get_current_size() >= db.get_size_limit()) { // Example condition for compaction
             db.compact();
-            std::cout << "\n\n-------------------\n";
-            std::cout << "Database compacted.\n";
+            std::cout << "\n-------------------\n";
+            std::cout << "Compaction done.\n";
             std::cout << "-------------------\n";
         }
 
-        std::cout << "\n1. Put\n2. Get\n3. Delete\n4. Exit\nChoice: ";
-        std::cin >> choice;
-
-        if (std::cin.fail()) { // Check if input is invalid
-            std::cin.clear(); // Clear the error state
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
-            std::cout << "Invalid input. Please enter a number.\n";
-            continue; // Restart the loop
-        }
-
-        switch (choice) {
-            case 1:
-                std::cout << "Key: "; std::cin >> key;
-                std::cout << "Value: "; std::cin >> value;
-                db.put(key, value);
-                break;
-            case 2:
-                std::cout << "Key: "; std::cin >> key;
-                std::cout << "Value: " << db.get(key) << "\n";
-                break;
-            case 3:
-                std::cout << "Key: "; std::cin >> key;
-                std::cout << "Deleted value: " << db.get(key) << "\n";
-                db.del(key);
-                break;
-            case 4: return 0;
-            default:
-                std::cout << "Invalid choice. Try again.\n";
+        
+        // TODO: Handle multiple word inputs for key and value
+        // For simplicity, we will assume single word inputs for now
+        if (cmd == "put") {
+            std::string key, value;
+            iss >> key;
+            std::getline(iss, value);
+            value = value.substr(value.find_first_not_of(' ')); // Trim leading spaces
+            db.put(key, value);
+            std::cout << "OK\n";
+        } else if (cmd == "get") {
+            std::string key;
+            iss >> key;
+            std::string value;
+            if (db.get(key) != "")
+                std::cout << value << "\n";
+            else
+                std::cout << "(nil)\n";
+        } else if (cmd == "del") {
+            std::string key;
+            iss >> key;
+            db.del(key);
+            std::cout << "Deleted\n";
+        } else if (cmd == "scan") {
+            // std::string prefix;
+            // iss >> prefix;
+            // auto results = db.scan_prefix(prefix);  // you'll need to implement this
+            // for (const auto& kv : results)
+            //     std::cout << kv.first << ": " << kv.second << "\n";
+        } else if (cmd == "compact") {
+            db.compact();
+            std::cout << "Compaction done.\n";
+        } else if (cmd == "stats") {
+            // db.print_stats();  // implement this to print internal stats
+        } else if (cmd == "exit" || cmd == "quit") {
+            std::cout << "Bye!\n";
+            break;
+        } else if (cmd == "help") {
+            std::cout << "Commands:\n";
+            std::cout << "  put <key> <value>\n";
+            std::cout << "  get <key>\n";
+            std::cout << "  del <key>\n";
+            std::cout << "  scan <prefix>\n";
+            std::cout << "  stats\n";
+            std::cout << "  compact\n";
+            std::cout << "  exit\n";
+        } else {
+            std::cout << "Unknown command. Type 'help'.\n";
         }
     }
+}
+
+int main() {
+    KVStore db("data/db.log");
+    start_cli(db);
+    return 0;
 }
