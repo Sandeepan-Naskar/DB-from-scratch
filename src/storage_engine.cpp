@@ -49,6 +49,7 @@ void StorageEngine::compact(std::unordered_map<std::string, std::string>& latest
     std::ofstream out("data/db_compacted.log");
     for (const auto& [k, v] : latest)
         out << k << ":" << v << "\n";
+    current_size_ = latest.size(); // Update current size after compaction
 
     // 3. Replace old log (rename files)
     std::remove("data/db.log");
