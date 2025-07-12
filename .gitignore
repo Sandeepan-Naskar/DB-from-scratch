@@ -1,4 +1,4 @@
-bin/kvdb
+bin/docdb
 data/db.log
 .vscode/settings.json
 data/db.log.snapshot

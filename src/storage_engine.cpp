@@ -3,7 +3,6 @@
 #include <iostream>
 
 StorageEngine::StorageEngine(const std::string& db_path) : db_path_(db_path) {
-    // Constructor implementation can be added if needed
     size_limit_ = 10; // Example size limit for compaction
     current_size_ = 0; // Initialize current size
     snapshot_path_ = db_path + ".snapshot"; // Example snapshot path
@@ -12,7 +11,7 @@ StorageEngine::StorageEngine(const std::string& db_path) : db_path_(db_path) {
 void StorageEngine::append_put(const std::string& key, const std::string& value) {
     std::ofstream out(db_path_, std::ios::app);
     if (out.is_open()) {
-        out << key << ":" << value << "\n";
+        out << "PUT " << key << " " << value << "\n"; // Write in the desired format
     } else {
         std::cerr << "Failed to open DB file at " << db_path_ << "\n";
     }
@@ -22,7 +21,7 @@ void StorageEngine::append_put(const std::string& key, const std::string& value)
 void StorageEngine::append_del(const std::string& key) {
     std::ofstream out(db_path_, std::ios::app);
     if (out.is_open()) {
-        out << key << ":<TOMBSTONE>\n"; // Using a special marker for deletion
+        out << "DEL " << key << "\n"; // Write in the desired format
     } else {
         std::cerr << "Failed to open DB file at " << db_path_ << "\n";
     }
@@ -35,21 +34,29 @@ void StorageEngine::compact(std::unordered_map<std::string, std::string>& latest
     std::ifstream in(db_path_);
     std::string line;
     while (std::getline(in, line)) {
-        auto pos = line.find(":");
+        auto pos = line.find(" ");
         if (pos != std::string::npos) {
-            std::string key = line.substr(0, pos);
-            std::string val = line.substr(pos + 1);
-            if (val == "<TOMBSTONE>")
-                latest.erase(key); // skip deleted keys
-            else
-                latest[key] = val;
+            std::string operation = line.substr(0, pos);
+            std::string rest = line.substr(pos + 1);
+
+            if (operation == "PUT") {
+                auto key_pos = rest.find(" ");
+                if (key_pos != std::string::npos) {
+                    std::string key = rest.substr(0, key_pos);
+                    std::string value = rest.substr(key_pos + 1);
+                    latest[key] = value; // Update the latest value
+                }
+            } else if (operation == "DEL") {
+                latest.erase(rest); // Remove the key
+            }
         }
     }
 
     // 2. Write new compacted log
     std::ofstream out("data/db_compacted.log");
-    for (const auto& [k, v] : latest)
-        out << k << ":" << v << "\n";
+    for (const auto& [k, v] : latest) {
+        out << "PUT " << k << " " << v << "\n";
+    }
     current_size_ = latest.size(); // Update current size after compaction
 
     // 3. Replace old log (rename files)
@@ -69,22 +76,28 @@ std::vector<std::pair<std::string, std::string>> StorageEngine::load_all() {
 
     std::string line;
     while (std::getline(in, line)) {
-        auto pos = line.find(":");
-        if (pos == std::string::npos) continue;
+        auto pos = line.find(" ");
+        if (pos != std::string::npos) {
+            std::string operation = line.substr(0, pos);
+            std::string rest = line.substr(pos + 1);
 
-        std::string key = line.substr(0, pos);
-        std::string value = line.substr(pos + 1);
-
-        if (value == "<TOMBSTONE>") {
-            latest.erase(key);
-        } else {
-            latest[key] = value;
+            if (operation == "PUT") {
+                auto key_pos = rest.find(" ");
+                if (key_pos != std::string::npos) {
+                    std::string key = rest.substr(0, key_pos);
+                    std::string value = rest.substr(key_pos + 1);
+                    latest[key] = value; // Update the latest value
+                }
+            } else if (operation == "DEL") {
+                latest.erase(rest); // Remove the key
+            }
         }
         current_size_++; // Increment current size for each entry loaded
     }
 
-    for (const auto& [k, v] : latest)
+    for (const auto& [k, v] : latest) {
         result.emplace_back(k, v);
+    }
 
     return result;
 }
