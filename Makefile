@@ -1,6 +1,7 @@
 # Compiler and flags
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Iinclude
+LDFLAGS = -lreadline
 
 # Directories
 SRC_DIR := src
@@ -17,7 +18,7 @@ all: $(TARGET)
 # Link and build executable
 $(TARGET): $(SRCS)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Run the program
 run: $(TARGET)

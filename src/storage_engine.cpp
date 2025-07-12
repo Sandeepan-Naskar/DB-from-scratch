@@ -6,6 +6,7 @@ StorageEngine::StorageEngine(const std::string& db_path) : db_path_(db_path) {
     // Constructor implementation can be added if needed
     size_limit_ = 10; // Example size limit for compaction
     current_size_ = 0; // Initialize current size
+    snapshot_path_ = db_path + ".snapshot"; // Example snapshot path
 }
 
 void StorageEngine::append_put(const std::string& key, const std::string& value) {
@@ -86,4 +87,34 @@ std::vector<std::pair<std::string, std::string>> StorageEngine::load_all() {
         result.emplace_back(k, v);
 
     return result;
+}
+
+bool StorageEngine::write_snapshot(const std::unordered_map<std::string, std::string>& store) {
+    std::ofstream out(snapshot_path_, std::ios::trunc);
+    if (!out.is_open()) return false;
+
+    for (const auto& [key, value] : store) {
+        out << key << '\t' << value << '\n';
+    }
+    current_size_ = store.size(); // Update current size after writing snapshot
+
+    return true;
+}
+
+std::unordered_map<std::string, std::string> StorageEngine::load_snapshot() {
+    std::unordered_map<std::string, std::string> store;
+    std::ifstream in(snapshot_path_);
+    if (!in.is_open()) return store;
+
+    std::string line;
+    while (std::getline(in, line)) {
+        auto tab_pos = line.find('\t');
+        if (tab_pos != std::string::npos) {
+            std::string key = line.substr(0, tab_pos);
+            std::string value = line.substr(tab_pos + 1);
+            store[key] = value;
+        }
+    }
+
+    return store;
 }
